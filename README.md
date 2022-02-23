@@ -1,10 +1,10 @@
-# Adafruit AW9523 GPIO Expander and LED Driver for Arduino [![Build Status](https://github.com/adafruit/Adafruit_AW9523/workflows/Arduino%20Library%20CI/badge.svg)](https://github.com/adafruit/Adafruit_AW9523/actions)[![Documentation](https://github.com/adafruit/ci-arduino/blob/master/assets/doxygen_badge.svg)](http://adafruit.github.io/Adafruit_AW9523/html/index.html)
+# Adafruit TCA8418 GPIO Expander and LED Driver for Arduino [![Build Status](https://github.com/adafruit/Adafruit_TCA8418/workflows/Arduino%20Library%20CI/badge.svg)](https://github.com/adafruit/Adafruit_TCA8418/actions)[![Documentation](https://github.com/adafruit/ci-arduino/blob/master/assets/doxygen_badge.svg)](http://adafruit.github.io/Adafruit_TCA8418/html/index.html)
 
-This is a library for the AW9523 GPIO Expander and LED Driver
+This is a library for the TCA8418 GPIO Expander and Key Matrix Driver
 
-Designed specifically to work with the AW9523 breakout in the Adafruit shop:
+Designed specifically to work with the TCA8418 breakout in the Adafruit shop:
 
-- https://www.adafruit.com/products/4885
+- https://www.adafruit.com/
 
 These boards use **I2C** to communicate. 2 pins are required to interface.
 Adafruit invests time and resources providing this open source code,
