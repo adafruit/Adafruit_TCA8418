@@ -1,4 +1,6 @@
-# Adafruit TCA8418 GPIO Expander and LED Driver for Arduino [![Build Status](https://github.com/adafruit/Adafruit_TCA8418/workflows/Arduino%20Library%20CI/badge.svg)](https://github.com/adafruit/Adafruit_TCA8418/actions)[![Documentation](https://github.com/adafruit/ci-arduino/blob/master/assets/doxygen_badge.svg)](http://adafruit.github.io/Adafruit_TCA8418/html/index.html)
+# Adafruit TCA8418 GPIO Expander and LED Driver for Arduino 
+
+[![Build Status](https://github.com/adafruit/Adafruit_TCA8418/workflows/Arduino%20Library%20CI/badge.svg)](https://github.com/adafruit/Adafruit_TCA8418/actions)[![Documentation](https://github.com/adafruit/ci-arduino/blob/master/assets/doxygen_badge.svg)](http://adafruit.github.io/Adafruit_TCA8418/html/index.html)
 
 This is a library for the TCA8418 GPIO Expander and Key Matrix Driver
 

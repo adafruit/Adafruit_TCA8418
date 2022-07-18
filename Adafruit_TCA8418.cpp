@@ -37,9 +37,14 @@
 /*!
  *    @brief  Instantiates a new TCA8418 class
  */
-Adafruit_TCA8418::Adafruit_TCA8418(void) {}
+Adafruit_TCA8418::Adafruit_TCA8418(void)
+{
+}
 
-Adafruit_TCA8418::~Adafruit_TCA8418(void) {}
+Adafruit_TCA8418::~Adafruit_TCA8418(void)
+{
+}
+
 
 /*!
  *    @brief  Sets up the hardware and initializes I2C
@@ -48,57 +53,312 @@ Adafruit_TCA8418::~Adafruit_TCA8418(void) {}
  *            The Wire object to be used for I2C connections.
  *    @return True if initialization was successful, otherwise false.
  */
-bool Adafruit_TCA8418::begin(uint8_t addr, TwoWire *wire) {
+bool Adafruit_TCA8418::begin(uint8_t address, TwoWire *wire) {
   if (i2c_dev) {
     delete i2c_dev; // remove old interface
   }
 
-  i2c_dev = new Adafruit_I2CDevice(addr, wire);
+  i2c_dev = new Adafruit_I2CDevice(address, wire);
 
   if (!i2c_dev->begin()) {
     return false;
   }
+  return true;
+}
 
+
+
+/**
+ * @brief configures the size of the keypad matrix.
+ *
+ * @param [in] rows    number of rows
+ * @param [in] columns number of columns
+ * @return true is rows and columns have valid values.
+ *
+ * @details will always use the lowest pins for rows and columns.
+ */
+ bool Adafruit_TCA8418::matrix(uint8_t rows, uint8_t columns)
+{
+  if ((rows > 8) || (columns > 10)) return false;
+
+  //  GPIO
+  //  set all pins to INPUT
+  writeRegister(TCA8418_REG_GPIO_DIR_1, 0x00);
+  writeRegister(TCA8418_REG_GPIO_DIR_2, 0x00);
+  writeRegister(TCA8418_REG_GPIO_DIR_3, 0x00);
+
+  //  add all pins to key events
+  writeRegister(TCA8418_REG_GPI_EM_1, 0xFF);
+  writeRegister(TCA8418_REG_GPI_EM_2, 0xFF);
+  writeRegister(TCA8418_REG_GPI_EM_3, 0xFF);
+
+  //  set all pins to FALLING interrupts
+  writeRegister(TCA8418_REG_GPIO_INT_LVL_1, 0x00);
+  writeRegister(TCA8418_REG_GPIO_INT_LVL_2, 0x00);
+  writeRegister(TCA8418_REG_GPIO_INT_LVL_3, 0x00);
+
+  //  add all pins to interrupts
+  writeRegister(TCA8418_REG_GPIO_INT_EN_1, 0xFF);
+  writeRegister(TCA8418_REG_GPIO_INT_EN_2, 0xFF);
+  writeRegister(TCA8418_REG_GPIO_INT_EN_3, 0xFF);
+
+  //  MATRIX
+  //  skip zero size matrix
+  if ((rows != 0) && (columns != 0))
+  {
+    // setup the keypad matrix.
+    uint8_t mask = 0x00;
+    for (int r = 0; r < rows; r++)
+    {
+      mask <<= 1;
+      mask |= 1;
+    }
+    writeRegister(TCA8418_REG_KP_GPIO_1, mask);
+
+    mask = 0x00;
+    for (int c = 0; c < columns && c < 8; c++)
+    {
+      mask <<= 1;
+      mask |= 1;
+    }
+    writeRegister(TCA8418_REG_KP_GPIO_2, mask);
+
+    if (columns > 8)
+    {
+      if (columns == 9) mask = 0x01;
+      else mask = 0x03;
+      writeRegister(TCA8418_REG_KP_GPIO_3, mask);
+    }
+  }
 
   return true;
 }
 
-/*!
- *    @brief  Sets GPIO data direction for a pin
- *    @param  pinnum Pin name between TCA8418_ROW0 and TCA8418_COL9
- *    @param  mode INPUT for input GPIO, OUTPUT for output!
- *    @return True I2C write command was acknowledged
+
+/////////////////////////////////////////////////////////////////////////////
+//
+//  KEY EVENTS
+//
+/**
+ * @brief checks if key events are available in the internal buffer
+ *
+ * @return number of key events in the buffer
  */
-bool Adafruit_TCA8418::pinDirection(uint8_t pinnum, bool mode) {
-  if (pinnum > TCA8418_COL9) {
-    return false;
-  }
-
-  uint8_t reg = TCA8418_REG_GPIO_DIR1 + pinnum / 8;
-  uint8_t bit = pinnum % 8;
-
-  Adafruit_I2CRegister gpiodirreg = Adafruit_I2CRegister(i2c_dev, reg);
-  Adafruit_I2CRegisterBits dirbit =
-      Adafruit_I2CRegisterBits(&gpiodirreg, 1, bit); // # bits, bit_shift
-
-  return dirbit.write(mode);
+uint8_t Adafruit_TCA8418::available()
+{
+  uint8_t eventCount = readRegister(TCA8418_REG_KEY_LCK_EC);
+  eventCount &= 0x0F;   //  lower bits only
+  return eventCount;
 }
 
-/*!
- *    @brief  Sets GPIO data direction for a pin
- *    @param  pinnum Pin name between TCA8418_ROW0 and TCA8418_COL9
- *    @return True I2C write command was acknowledged
+/**
+ * @brief gets first event from the internal buffer
+ *
+ * @return key event or 0 if none available
+ *
+ * @details
+ *     key event 0x00        no event
+ *               0x01..0x50  key press
+ *               0x81..0xD0  key release
+ *               0x5B..0x72  GPI press    ??  TODO
+ *               0xDB..0xF2  GPI release  ??  TODO
  */
-bool Adafruit_TCA8418::pinDirection(uint8_t pinnum, bool mode) {
-  if (pinnum > TCA8418_COL9) {
-    return false;
-  }
-  uint8_t reg = TCA8418_REG_GPIO_DIR1 + pinnum / 8;
-  uint8_t bit = pinnum % 8;
-
-  Adafruit_I2CRegister gpiodirreg = Adafruit_I2CRegister(i2c_dev, reg);
-  Adafruit_I2CRegisterBits dirbit =
-      Adafruit_I2CRegisterBits(&gpiodirreg, 1, bit); // # bits, bit_shift
-
-  return dirbit.write(mode);
+uint8_t Adafruit_TCA8418::getEvent()
+{
+  uint8_t event = readRegister(TCA8418_REG_KEY_EVENT_A);
+  // TODO clear interrupt register ?  
+  //      see 8.3.1.3 Key Event (FIFO) Reading
+  return event;
 }
+
+/**
+ * @brief flushes the internal buffer of key events
+ *
+ * @return number of keys flushed.
+ */
+uint8_t Adafruit_TCA8418::flush()
+{
+  uint8_t count = 0;
+  while(getEvent() != 0) count++;
+  return count;
+}
+
+
+
+/////////////////////////////////////////////////////////////////////////////
+//
+//  GPIO
+//
+
+/**
+ * @brief read GPIO
+ *
+ * @param [in] pinnum Pin name between TCA8418_ROW0 and TCA8418_COL9
+ * @return 0 = LOW, 1 = HIGH, 0xFF = pinnum out of range
+ */
+uint8_t Adafruit_TCA8418::digitalRead(uint8_t pinnum)
+{
+  if (pinnum > TCA8418_COL9) return 0xFF;
+
+  uint8_t reg  = TCA8418_REG_GPIO_DAT_STAT_1 + pinnum / 8;
+  uint8_t mask = (1 << (pinnum % 8));
+  
+    // LEVEL  0 = LOW  other = HIGH
+  uint8_t value = readRegister(reg);
+  if (value & mask) return HIGH;
+  return LOW;
+}
+
+/**
+ * @brief set GPIO pin to LOW or HIGH
+ *
+ * @param [in] pinnum Pin name between TCA8418_ROW0 and TCA8418_COL9
+ * @param [in] value  0 = LOW, all other are HIGH
+ * @return true if successful
+ */
+bool Adafruit_TCA8418::digitalWrite(uint8_t pinnum, uint8_t level)
+{
+  if (pinnum > TCA8418_COL9) return false;
+
+  uint8_t reg  = TCA8418_REG_GPIO_DAT_OUT_1 + pinnum / 8;
+  uint8_t mask = (1 << (pinnum % 8));
+  
+    // LEVEL  0 = LOW  other = HIGH
+  uint8_t value = readRegister(reg);
+  if (level == LOW) value &= ~mask;
+  else              value |= mask;
+  writeRegister(reg, value);
+  return true;
+}
+
+/**
+ * @brief set mode of GPIO pin to INPUT, INPUT_PULLUP or OUTPUT
+ *
+ * @param [in] pinnum Pin name between TCA8418_ROW0 and TCA8418_COL9
+ * @param [in] mode   INPUT, INPUT_PULLUP or OUTPUT
+ * @return  false if failed.
+ */
+bool Adafruit_TCA8418::pinMode(uint8_t pinnum, uint8_t mode)
+{
+  if (pinnum > TCA8418_COL9) return false;
+  // if (mode > INPUT_PULLUP) return false; ?s
+
+  uint8_t idx  = pinnum / 8;
+  uint8_t reg  = TCA8418_REG_GPIO_DIR_1 + idx;
+  uint8_t mask = (1 << (pinnum % 8));
+
+  // MODE  0 = INPUT   1 = OUTPUT
+  uint8_t value = readRegister(reg);
+  if (mode == OUTPUT) value |= mask;
+  else                value &= ~mask;
+  writeRegister(reg, value);
+
+  // PULLUP  0 = enabled   1 = disabled
+  reg = TCA8418_REG_GPIO_PULL_1 + idx;
+  value = readRegister(reg);
+  if (mode == INPUT_PULLUP) value &= ~mask;
+  else value |= mask;
+  writeRegister(reg, value);
+
+  return true;
+}
+
+bool Adafruit_TCA8418::pinIRQMode(uint8_t pinnum, uint8_t mode)
+{
+  if (pinnum > TCA8418_COL9) return false;
+  if ((mode != RISING) && (mode != FALLING)) return false;
+
+  uint8_t idx  = pinnum / 8;
+  uint8_t reg  = TCA8418_REG_GPIO_INT_LVL_1 + idx;
+  uint8_t mask = (1 << (pinnum % 8));
+
+  // MODE  0 = FALLING   1 = RISING
+  uint8_t value = readRegister(reg);
+  if (mode == RISING)  value |= mask;
+  else value &= ~mask;
+  writeRegister(reg, value);
+
+  return true;
+}
+
+
+
+/////////////////////////////////////////////////////////////////////////////
+//
+//  CONFIGURATION
+//
+void Adafruit_TCA8418::enableInterrupts()
+{
+  uint8_t value = readRegister(TCA8418_REG_CFG);
+  value |= (TCA8418_REG_CFG_GPI_IEN | TCA8418_REG_CFG_KE_IEN);
+  writeRegister(TCA8418_REG_CFG, value);
+};
+
+void Adafruit_TCA8418::disableInterrupts()
+{
+  uint8_t value = readRegister(TCA8418_REG_CFG);
+  value &= ~(TCA8418_REG_CFG_GPI_IEN | TCA8418_REG_CFG_KE_IEN);
+  writeRegister(TCA8418_REG_CFG, value);
+};
+
+void Adafruit_TCA8418::enableMatrixOverflow()
+{
+  uint8_t value = readRegister(TCA8418_REG_CFG);
+  value |= TCA8418_REG_CFG_OVR_FLOW_M;
+  writeRegister(TCA8418_REG_CFG, value);
+};
+
+void Adafruit_TCA8418::disableMatrixOverflow()
+{
+  uint8_t value = readRegister(TCA8418_REG_CFG);
+  value &= ~TCA8418_REG_CFG_OVR_FLOW_M;
+  writeRegister(TCA8418_REG_CFG, value);
+};
+
+void Adafruit_TCA8418::enableDebounce()
+{
+  writeRegister(TCA8418_REG_DEBOUNCE_DIS_1, 0x00);
+  writeRegister(TCA8418_REG_DEBOUNCE_DIS_2, 0x00);
+  writeRegister(TCA8418_REG_DEBOUNCE_DIS_3, 0x00);
+}
+
+void Adafruit_TCA8418::disableDebounce()
+{
+  writeRegister(TCA8418_REG_DEBOUNCE_DIS_1, 0xFF);
+  writeRegister(TCA8418_REG_DEBOUNCE_DIS_2, 0xFF);
+  writeRegister(TCA8418_REG_DEBOUNCE_DIS_3, 0xFF);
+}
+
+
+/////////////////////////////////////////////////////////////////////////////
+//
+//  LOW LEVEL
+//
+/**
+ * @brief reads byte value from register
+ *
+ * @param [in] reg register address
+ * @return value from register
+ */
+uint8_t Adafruit_TCA8418::readRegister(uint8_t reg)
+{
+  Adafruit_I2CRegister i2cReg = Adafruit_I2CRegister(i2c_dev, reg);
+  uint8_t buffer[1] = {0};
+  i2cReg.read(buffer, 1);
+  return buffer[0];
+}
+
+/**
+ * @brief write byte to register
+ *
+ * @param [in] reg register address
+ * @param [in] value
+ */
+void Adafruit_TCA8418::writeRegister(uint8_t reg, uint8_t value)
+{
+  Adafruit_I2CRegister i2cReg = Adafruit_I2CRegister(i2c_dev, reg);
+  i2cReg.write(value);
+}
+
+
+
