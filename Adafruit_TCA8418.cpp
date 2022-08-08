@@ -60,21 +60,6 @@ bool Adafruit_TCA8418::begin(uint8_t address, TwoWire *wire) {
   if (!i2c_dev->begin()) {
     return false;
   }
-  return true;
-}
-
-/**
- * @brief configures the size of the keypad matrix.
- *
- * @param [in] rows    number of rows
- * @param [in] columns number of columns
- * @return true is rows and columns have valid values.
- *
- * @details will always use the lowest pins for rows and columns.
- */
-bool Adafruit_TCA8418::matrix(uint8_t rows, uint8_t columns) {
-  if ((rows > 8) || (columns > 10))
-    return false;
 
   //  GPIO
   //  set all pins to INPUT
@@ -96,6 +81,22 @@ bool Adafruit_TCA8418::matrix(uint8_t rows, uint8_t columns) {
   writeRegister(TCA8418_REG_GPIO_INT_EN_1, 0xFF);
   writeRegister(TCA8418_REG_GPIO_INT_EN_2, 0xFF);
   writeRegister(TCA8418_REG_GPIO_INT_EN_3, 0xFF);
+
+  return true;
+}
+
+/**
+ * @brief configures the size of the keypad matrix.
+ *
+ * @param [in] rows    number of rows
+ * @param [in] columns number of columns
+ * @return true is rows and columns have valid values.
+ *
+ * @details will always use the lowest pins for rows and columns.
+ */
+bool Adafruit_TCA8418::matrix(uint8_t rows, uint8_t columns) {
+  if ((rows > 8) || (columns > 10))
+    return false;
 
   //  MATRIX
   //  skip zero size matrix
@@ -138,7 +139,7 @@ bool Adafruit_TCA8418::matrix(uint8_t rows, uint8_t columns) {
  */
 uint8_t Adafruit_TCA8418::available() {
   uint8_t eventCount = readRegister(TCA8418_REG_KEY_LCK_EC);
-  eventCount &= 0x0F; //  lower bits only
+  eventCount &= 0x0F; //  lower 4 bits only
   return eventCount;
 }
 
@@ -156,7 +157,7 @@ uint8_t Adafruit_TCA8418::available() {
  */
 uint8_t Adafruit_TCA8418::getEvent() {
   uint8_t event = readRegister(TCA8418_REG_KEY_EVENT_A);
-  // TODO clear interrupt register ?
+  // TODO clear interrupt register ?  YES, but which bit?
   //      see 8.3.1.3 Key Event (FIFO) Reading
   return event;
 }
@@ -181,7 +182,7 @@ uint8_t Adafruit_TCA8418::flush() {
 /**
  * @brief read GPIO
  *
- * @param [in] pinnum Pin name between TCA8418_ROW0 and TCA8418_COL9
+ * @param [in] pinnum Pin name between TCA8418_ROW0 and TCA8418_COL9  0..17
  * @return 0 = LOW, 1 = HIGH, 0xFF = pinnum out of range
  */
 uint8_t Adafruit_TCA8418::digitalRead(uint8_t pinnum) {
@@ -201,7 +202,7 @@ uint8_t Adafruit_TCA8418::digitalRead(uint8_t pinnum) {
 /**
  * @brief set GPIO pin to LOW or HIGH
  *
- * @param [in] pinnum Pin name between TCA8418_ROW0 and TCA8418_COL9
+ * @param [in] pinnum Pin name between TCA8418_ROW0 and TCA8418_COL9  0..17
  * @param [in] value  0 = LOW, all other are HIGH
  * @return true if successful
  */
@@ -225,7 +226,7 @@ bool Adafruit_TCA8418::digitalWrite(uint8_t pinnum, uint8_t level) {
 /**
  * @brief set mode of GPIO pin to INPUT, INPUT_PULLUP or OUTPUT
  *
- * @param [in] pinnum Pin name between TCA8418_ROW0 and TCA8418_COL9
+ * @param [in] pinnum Pin name between TCA8418_ROW0 and TCA8418_COL9  0..17
  * @param [in] mode   INPUT, INPUT_PULLUP or OUTPUT
  * @return  false if failed.
  */
@@ -264,16 +265,22 @@ bool Adafruit_TCA8418::pinIRQMode(uint8_t pinnum, uint8_t mode) {
   if ((mode != RISING) && (mode != FALLING))
     return false;
 
+  //  MODE  0 = FALLING   1 = RISING
   uint8_t idx = pinnum / 8;
   uint8_t reg = TCA8418_REG_GPIO_INT_LVL_1 + idx;
   uint8_t mask = (1 << (pinnum % 8));
 
-  // MODE  0 = FALLING   1 = RISING
   uint8_t value = readRegister(reg);
   if (mode == RISING)
     value |= mask;
   else
     value &= ~mask;
+  writeRegister(reg, value);
+
+  // ENABLE INTERRUPT
+  reg = TCA8418_REG_GPIO_INT_EN_1 + idx;
+  value = readRegister(reg);
+  value |= mask;
   writeRegister(reg, value);
 
   return true;

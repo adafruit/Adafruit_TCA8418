@@ -1,8 +1,8 @@
 
 /***************************************************
 
-  @file tca8418_test_interrupt.ino
-  
+  @file tca8418_keypad_interrupt.ino
+
   This is an example for the Adafruit TCA8418 Keypad Matrix / GPIO Expander Breakout
 
   Designed specifically to work with the Adafruit TCA8418 Keypad Matrix
@@ -10,7 +10,7 @@
 
   These Keypad Matrix use I2C to communicate, 2 pins are required to
   interface.
-  The Keypad Matrix has an interrupt pin to provide fast detection 
+  The Keypad Matrix has an interrupt pin to provide fast detection
   of changes. This example shows the working of polling.
 
   Adafruit invests time and resources providing this open source code,
@@ -29,7 +29,7 @@
 Adafruit_TCA8418 keypad;
 
 //  typical Arduino UNO
-const int IRQPIN = 2;
+const int IRQPIN = 3;
 
 volatile bool TCA8418_event = false;
 
@@ -46,23 +46,23 @@ void setup()
     delay(10);
   }
   Serial.println(__FILE__);
-  
+
   if (! keypad.begin(TCA8418_DEFAULT_ADDR, &Wire)) {
-     Serial.println("keypad not found, check wiring & pullups!");
-     while (1);
+    Serial.println("keypad not found, check wiring & pullups!");
+    while (1);
   }
 
   //  configure the size of the keypad matrix.
-  //  all other pins will be inputs 
-  keypad.matrix(3, 3);
+  //  all other pins will be inputs
+  keypad.matrix(8, 10);
 
   //  flush the internal buffer
   keypad.flush();
 
   //  install interrupt handler
   //  going LOW is interrupt
-  pinMode(IRQPIN, INPUT_PULLUP);
-  attachInterrupt(digitalPinToInterrupt(IRQPIN), TCA8418_irq, FALLING);
+  pinMode(IRQPIN, INPUT);
+  attachInterrupt(digitalPinToInterrupt(IRQPIN), TCA8418_irq, CHANGE);
 
   //  enable interrupt mode
   keypad.enableInterrupts();
@@ -71,12 +71,37 @@ void setup()
 
 void loop()
 {
-  if (TCA8418_event)
+  //  CHECKING THE STAT REGISTER WORKS
+  static uint32_t last = 0;
+  if (millis() - last > 1000)
+  {
+    last = millis();
+    int x = keypad.readRegister(TCA8418_REG_INT_STAT);
+    Serial.print("X:\t");
+    Serial.println(x, HEX);
+
+    if (x & 0x01 == 0x01)
+    {
+      keypad.getEvent();
+      keypad.writeRegister(TCA8418_REG_INT_STAT, 1);
+    }
+  }
+
+  //  BUT THE INTERRUPTS DO NOT ARRIVE ON THE IRQ PIN.
+  if (TCA8418_event == true)
   {
     TCA8418_event = false;
+    //  datasheet page 15 - Table 1
     int k = keypad.getEvent();
-    Serial.println(k, HEX);
+    if (k & 0x80) Serial.print("PRESS\tR: ");
+    else Serial.print("RELEASE\tR: ");
+    k &= 0x7F;
+    k--;
+    Serial.print(k / 10);
+    Serial.print("\tC: ");
+    Serial.print(k % 10);
+    Serial.println();
   }
   // other code here
-  delay(1000);
+  // delay(1000);
 }

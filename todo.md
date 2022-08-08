@@ -53,7 +53,7 @@
 
 |  prio  |   topic                           | notes
 |:------:|:----------------------------------|:--------|
-|        | keyMapping nrs on e.g. chars?     | is this part of the lib?
+|        | keyMapping nrs on e.g. chars?     | Part of the lib? NO => app dependant.
 |        |                                   |
 |        |                                   | 
 

@@ -2,7 +2,7 @@
 /***************************************************
 
   @file tca8418_keypad.ino
-  
+
   This is an example for the Adafruit TCA8418 Keypad Matrix / GPIO Expander Breakout
 
   Designed specifically to work with the Adafruit TCA8418 Keypad Matrix
@@ -10,7 +10,7 @@
 
   These Keypad Matrix use I2C to communicate, 2 pins are required to
   interface.
-  The Keypad Matrix has an interrupt pin to provide fast detection 
+  The Keypad Matrix has an interrupt pin to provide fast detection
   of changes. This example shows the working of polling.
 
   Adafruit invests time and resources providing this open source code,
@@ -34,15 +34,15 @@ void setup()
     delay(10);
   }
   Serial.println(__FILE__);
-  
+
   if (! keypad.begin(TCA8418_DEFAULT_ADDR, &Wire)) {
-     Serial.println("keypad not found, check wiring & pullups!");
-     while (1);
+    Serial.println("keypad not found, check wiring & pullups!");
+    while (1);
   }
 
   // configure the size of the keypad matrix.
-  // all other pins will be inputs 
-  keypad.matrix(3, 3);
+  // all other pins will be inputs
+  keypad.matrix(8, 10);
 
   // flush the internal buffer
   keypad.flush();
@@ -53,8 +53,16 @@ void loop()
 {
   if (keypad.available() > 0)
   {
+    //  datasheet page 15 - Table 1
     int k = keypad.getEvent();
-    Serial.println(k, HEX);
+    if (k & 0x80) Serial.print("PRESS\tR: ");
+    else Serial.print("RELEASE\tR: ");
+    k &= 0x7F;
+    k--;
+    Serial.print(k / 10);
+    Serial.print("\tC: ");
+    Serial.print(k % 10);
+    Serial.println();
   }
   // other code here
 }
