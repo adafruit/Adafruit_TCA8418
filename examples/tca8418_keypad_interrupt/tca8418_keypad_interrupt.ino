@@ -80,7 +80,7 @@ void loop()
     Serial.print("X:\t");
     Serial.println(x, HEX);
 
-    if (x & 0x01 == 0x01)
+    if ((x & 0x01) == 0x01)
     {
       keypad.getEvent();
       keypad.writeRegister(TCA8418_REG_INT_STAT, 1);
