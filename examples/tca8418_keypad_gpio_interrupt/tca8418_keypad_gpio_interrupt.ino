@@ -89,9 +89,10 @@ void loop()
     {
       //  reading the registers is mandatory to clear IRQ flag
       //  can also be used to find the GPIO changed
-      int x1 = keypad.readRegister(TCA8418_REG_GPIO_INT_STAT_1);
-      int x2 = keypad.readRegister(TCA8418_REG_GPIO_INT_STAT_2);
-      int x3 = keypad.readRegister(TCA8418_REG_GPIO_INT_STAT_3);
+      //  as these registers are a bitmap of the gpio pins.
+      keypad.readRegister(TCA8418_REG_GPIO_INT_STAT_1);
+      keypad.readRegister(TCA8418_REG_GPIO_INT_STAT_2);
+      keypad.readRegister(TCA8418_REG_GPIO_INT_STAT_3);
       //  clear GPIO IRQ flag
       keypad.writeRegister(TCA8418_REG_INT_STAT, 2);
     }
