@@ -93,9 +93,11 @@ void loop()
     if (intStat & 0x02)
     {
       //  reading the registers is mandatory to clear IRQ flag
-      int x1 = tio.readRegister(TCA8418_REG_GPIO_INT_STAT_1);
-      int x2 = tio.readRegister(TCA8418_REG_GPIO_INT_STAT_2);
-      int x3 = tio.readRegister(TCA8418_REG_GPIO_INT_STAT_3);
+      //  can also be used to find the GPIO changed
+      //  as these registers are a bitmap of the gpio pins.
+      tio.readRegister(TCA8418_REG_GPIO_INT_STAT_1);
+      tio.readRegister(TCA8418_REG_GPIO_INT_STAT_2);
+      tio.readRegister(TCA8418_REG_GPIO_INT_STAT_3);
       //  clear GPIO IRQ flag
       tio.writeRegister(TCA8418_REG_INT_STAT, 2);
     }
