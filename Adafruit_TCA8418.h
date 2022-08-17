@@ -70,7 +70,7 @@ public:
   //  bit 7 indicates  press = 0  or  release == 1 (mask 0x80)
   uint8_t getEvent();
 
-  //  flush all events in the FIFO buffer
+  //  flush all events in the FIFO buffer + GPIO events
   uint8_t flush();
 
   //  GPIO

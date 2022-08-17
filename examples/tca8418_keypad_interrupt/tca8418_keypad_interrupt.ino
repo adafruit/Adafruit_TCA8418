@@ -21,8 +21,6 @@
   BSD license, all text above must be included in any redistribution
  ****************************************************/
 
-// TO BE VERIFIED
-// 8.3.1.3 Key Event (FIFO) Reading
 
 #include <Adafruit_TCA8418.h>
 
@@ -56,14 +54,13 @@ void setup()
   //  all other pins will be inputs
   keypad.matrix(8, 10);
 
-  //  flush the internal buffer
-  keypad.flush();
-
   //  install interrupt handler
   //  going LOW is interrupt
   pinMode(IRQPIN, INPUT);
   attachInterrupt(digitalPinToInterrupt(IRQPIN), TCA8418_irq, CHANGE);
 
+  //  flush pending interrupts
+  keypad.flush();
   //  enable interrupt mode
   keypad.enableInterrupts();
 }
@@ -71,28 +68,17 @@ void setup()
 
 void loop()
 {
-  //  CHECKING THE STAT REGISTER WORKS
-  static uint32_t last = 0;
-  if (millis() - last > 1000)
-  {
-    last = millis();
-    int x = keypad.readRegister(TCA8418_REG_INT_STAT);
-    Serial.print("X:\t");
-    Serial.println(x, HEX);
-
-    if ((x & 0x01) == 0x01)
-    {
-      keypad.getEvent();
-      keypad.writeRegister(TCA8418_REG_INT_STAT, 1);
-    }
-  }
-
-  //  BUT THE INTERRUPTS DO NOT ARRIVE ON THE IRQ PIN.
   if (TCA8418_event == true)
   {
-    TCA8418_event = false;
     //  datasheet page 15 - Table 1
     int k = keypad.getEvent();
+    
+    //  try to clear the IRQ flag
+    //  if there are pending events it is not cleared
+    keypad.writeRegister(TCA8418_REG_INT_STAT, 1);
+    int intstat = keypad.readRegister(TCA8418_REG_INT_STAT);
+    if ((intstat & 0x01) == 0) TCA8418_event = false;
+
     if (k & 0x80) Serial.print("PRESS\tR: ");
     else Serial.print("RELEASE\tR: ");
     k &= 0x7F;
@@ -102,6 +88,7 @@ void loop()
     Serial.print(k % 10);
     Serial.println();
   }
+
   // other code here
-  // delay(1000);
+  delay(100);
 }

@@ -1,4 +1,4 @@
-/*!
+/**
  *  @file Adafruit_TCA8418.cpp
  *
  *  @mainpage I2C Driver for the Adafruit TCA8418 Keypad Matrix / GPIO Expander
@@ -10,7 +10,7 @@
  * Breakout
  *
  * 	This is a library for the Adafruit TCA8418 breakout:
- * 	https://www.adafruit.com/product/4918
+ * 	https://www.adafruit.com/product/XXXX
  *
  * 	Adafruit invests time and resources providing this open source code,
  *  please support Adafruit and open-source hardware by purchasing products from
@@ -36,14 +36,17 @@
 
 #include "Adafruit_TCA8418.h"
 
-/*!
+/**
  *    @brief  Instantiates a new TCA8418 class
  */
 Adafruit_TCA8418::Adafruit_TCA8418(void) {}
 
+/**
+ *    @brief  destructor
+ */
 Adafruit_TCA8418::~Adafruit_TCA8418(void) {}
 
-/*!
+/**
  *    @brief  Sets up the hardware and initializes I2C
  *    @param  addr The I2C address for the expander
  *    @param  wire
@@ -62,7 +65,7 @@ bool Adafruit_TCA8418::begin(uint8_t address, TwoWire *wire) {
   }
 
   //  GPIO
-  //  set all pins to INPUT
+  //  set default all GIO pins to INPUT
   writeRegister(TCA8418_REG_GPIO_DIR_1, 0x00);
   writeRegister(TCA8418_REG_GPIO_DIR_2, 0x00);
   writeRegister(TCA8418_REG_GPIO_DIR_3, 0x00);
@@ -88,11 +91,12 @@ bool Adafruit_TCA8418::begin(uint8_t address, TwoWire *wire) {
 /**
  * @brief configures the size of the keypad matrix.
  *
- * @param [in] rows    number of rows
- * @param [in] columns number of columns
+ * @param [in] rows    number of rows, should be <= 8
+ * @param [in] columns number of columns, should be <= 10
  * @return true is rows and columns have valid values.
  *
  * @details will always use the lowest pins for rows and columns.
+ *          0..rows-1  and  0..columns-1
  */
 bool Adafruit_TCA8418::matrix(uint8_t rows, uint8_t columns) {
   if ((rows > 8) || (columns > 10))
@@ -132,6 +136,7 @@ bool Adafruit_TCA8418::matrix(uint8_t rows, uint8_t columns) {
 //
 //  KEY EVENTS
 //
+
 /**
  * @brief checks if key events are available in the internal buffer
  *
@@ -150,27 +155,33 @@ uint8_t Adafruit_TCA8418::available() {
  *
  * @details
  *     key event 0x00        no event
- *               0x01..0x50  key press
- *               0x81..0xD0  key release
- *               0x5B..0x72  GPI press    ??  TODO
- *               0xDB..0xF2  GPI release  ??  TODO
+ *               0x01..0x50  key  press
+ *               0x81..0xD0  key  release
+ *               0x5B..0x72  GPIO press
+ *               0xDB..0xF2  GPIO release
  */
 uint8_t Adafruit_TCA8418::getEvent() {
   uint8_t event = readRegister(TCA8418_REG_KEY_EVENT_A);
-  // TODO clear interrupt register ?  YES, but which bit?
-  //      see 8.3.1.3 Key Event (FIFO) Reading
   return event;
 }
 
 /**
  * @brief flushes the internal buffer of key events
+ *        and cleans the GPIO status registers.
  *
  * @return number of keys flushed.
  */
 uint8_t Adafruit_TCA8418::flush() {
+  //  flush key events
   uint8_t count = 0;
   while (getEvent() != 0)
     count++;
+  //  flush gpio events
+  readRegister(TCA8418_REG_GPIO_INT_STAT_1);
+  readRegister(TCA8418_REG_GPIO_INT_STAT_2);
+  readRegister(TCA8418_REG_GPIO_INT_STAT_3);
+  //  clear INT_STAT register
+  writeRegister(TCA8418_REG_INT_STAT, 3);
   return count;
 }
 
@@ -259,6 +270,13 @@ bool Adafruit_TCA8418::pinMode(uint8_t pinnum, uint8_t mode) {
   return true;
 }
 
+/**
+ * @brief set IRQ mode of GPIO pin to FALLING RISING
+ *
+ * @param [in] pinnum Pin name between TCA8418_ROW0 and TCA8418_COL9  0..17
+ * @param [in] IRQ mode   FALLING RISING
+ * @return  false if failed.
+ */
 bool Adafruit_TCA8418::pinIRQMode(uint8_t pinnum, uint8_t mode) {
   if (pinnum > TCA8418_COL9)
     return false;
@@ -290,36 +308,55 @@ bool Adafruit_TCA8418::pinIRQMode(uint8_t pinnum, uint8_t mode) {
 //
 //  CONFIGURATION
 //
+
+/**
+ * @brief enables key event + GPIO interrupts.
+ */
 void Adafruit_TCA8418::enableInterrupts() {
   uint8_t value = readRegister(TCA8418_REG_CFG);
   value |= (TCA8418_REG_CFG_GPI_IEN | TCA8418_REG_CFG_KE_IEN);
   writeRegister(TCA8418_REG_CFG, value);
 };
 
+/**
+ * @brief disables key events + GPIO interrupts.
+ */
 void Adafruit_TCA8418::disableInterrupts() {
   uint8_t value = readRegister(TCA8418_REG_CFG);
   value &= ~(TCA8418_REG_CFG_GPI_IEN | TCA8418_REG_CFG_KE_IEN);
   writeRegister(TCA8418_REG_CFG, value);
 };
 
+/**
+ * @brief enables matrix overflow interrupt.
+ */
 void Adafruit_TCA8418::enableMatrixOverflow() {
   uint8_t value = readRegister(TCA8418_REG_CFG);
   value |= TCA8418_REG_CFG_OVR_FLOW_M;
   writeRegister(TCA8418_REG_CFG, value);
 };
 
+/**
+ * @brief disables matrix overflow interrupt.
+ */
 void Adafruit_TCA8418::disableMatrixOverflow() {
   uint8_t value = readRegister(TCA8418_REG_CFG);
   value &= ~TCA8418_REG_CFG_OVR_FLOW_M;
   writeRegister(TCA8418_REG_CFG, value);
 };
 
+/**
+ * @brief enables key debounce.
+ */
 void Adafruit_TCA8418::enableDebounce() {
   writeRegister(TCA8418_REG_DEBOUNCE_DIS_1, 0x00);
   writeRegister(TCA8418_REG_DEBOUNCE_DIS_2, 0x00);
   writeRegister(TCA8418_REG_DEBOUNCE_DIS_3, 0x00);
 }
 
+/**
+ * @brief disables key debounce.
+ */
 void Adafruit_TCA8418::disableDebounce() {
   writeRegister(TCA8418_REG_DEBOUNCE_DIS_1, 0xFF);
   writeRegister(TCA8418_REG_DEBOUNCE_DIS_2, 0xFF);
@@ -330,6 +367,7 @@ void Adafruit_TCA8418::disableDebounce() {
 //
 //  LOW LEVEL
 //
+
 /**
  * @brief reads byte value from register
  *
@@ -344,7 +382,7 @@ uint8_t Adafruit_TCA8418::readRegister(uint8_t reg) {
 }
 
 /**
- * @brief write byte to register
+ * @brief write byte value to register
  *
  * @param [in] reg register address
  * @param [in] value

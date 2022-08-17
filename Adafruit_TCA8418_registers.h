@@ -1,5 +1,5 @@
 #pragma once
-/*!
+/**
  *  @file Adafruit_TCA8418_registers.h
  *
  * 	I2C Driver for the Adafruit TCA8418 Keypad Matrix / GPIO Expander

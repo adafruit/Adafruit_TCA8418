@@ -1,7 +1,7 @@
 
 /***************************************************
 
-  @file tca8418_gpio_interrupt.ino
+  @file tca8418_keypad_gpio_interrupt.ino
 
   This is an example for the Adafruit TCA8418 Keypad Matrix / GPIO Expander Breakout
 
@@ -21,12 +21,10 @@
   BSD license, all text above must be included in any redistribution
  ****************************************************/
 
-// TO BE VERIFIED
-// 8.3.1.3 Key Event (FIFO) Reading
 
 #include <Adafruit_TCA8418.h>
 
-Adafruit_TCA8418 tio;
+Adafruit_TCA8418 keypad;
 
 //  typical Arduino UNO
 const int IRQPIN = 3;
@@ -47,27 +45,24 @@ void setup()
   }
   Serial.println(__FILE__);
 
-  if (! tio.begin(TCA8418_DEFAULT_ADDR, &Wire)) {
-    Serial.println("TCA8418 not found, check wiring & pull ups!");
+  if (! keypad.begin(TCA8418_DEFAULT_ADDR, &Wire)) {
+    Serial.println("keypad not found, check wiring & pullups!");
     while (1);
   }
 
-  //  SET INPUT MODE
-  for (int pin = 0; pin < 18; pin++)
-  {
-    tio.pinMode(pin, INPUT_PULLUP);
-    tio.pinIRQMode(pin, FALLING);
-  }
+  // configure the size of the keypad matrix.
+  // all other pins will be inputs
+  keypad.matrix(3, 3);
 
-  //  install interrupt handler on processor
+  //  install interrupt handler
   //  going LOW is interrupt
-  pinMode(IRQPIN, INPUT_PULLUP);
-  attachInterrupt(digitalPinToInterrupt(IRQPIN), TCA8418_irq, FALLING);
+  pinMode(IRQPIN, INPUT);
+  attachInterrupt(digitalPinToInterrupt(IRQPIN), TCA8418_irq, CHANGE);
 
   //  flush pending interrupts
-  tio.flush();
+  keypad.flush();
   //  enable interrupt mode
-  tio.enableInterrupts();
+  keypad.enableInterrupts();
 }
 
 
@@ -78,46 +73,61 @@ void loop()
   if (millis() - last > 1000)
   {
     last = millis();
-    int x = tio.readRegister(TCA8418_REG_INT_STAT);
+    int x = keypad.readRegister(TCA8418_REG_INT_STAT);
     Serial.print("STAT:\t");
     Serial.print(x, HEX);
     Serial.print("\t");
-    Serial.println(tio.available(), HEX);
+    Serial.println(keypad.available(), HEX);
   }
 
   //  IRQ TO HANDLE?
   if (TCA8418_event == true)
   {
     //  CHECK WHICH INTERRUPTS TO HANDLE
-    int intStat = tio.readRegister(TCA8418_REG_INT_STAT);
+    int intStat = keypad.readRegister(TCA8418_REG_INT_STAT);
     if (intStat & 0x02)
     {
       //  reading the registers is mandatory to clear IRQ flag
-      int x1 = tio.readRegister(TCA8418_REG_GPIO_INT_STAT_1);
-      int x2 = tio.readRegister(TCA8418_REG_GPIO_INT_STAT_2);
-      int x3 = tio.readRegister(TCA8418_REG_GPIO_INT_STAT_3);
+      //  can also be used to find the GPIO changed
+      int x1 = keypad.readRegister(TCA8418_REG_GPIO_INT_STAT_1);
+      int x2 = keypad.readRegister(TCA8418_REG_GPIO_INT_STAT_2);
+      int x3 = keypad.readRegister(TCA8418_REG_GPIO_INT_STAT_3);
       //  clear GPIO IRQ flag
-      tio.writeRegister(TCA8418_REG_INT_STAT, 2);
+      keypad.writeRegister(TCA8418_REG_INT_STAT, 2);
     }
 
     if (intStat & 0x01)
     {
       //  datasheet page 16 - Table 2
-      int keyCode = tio.getEvent();
+      int keyCode = keypad.getEvent();
       if (keyCode & 0x80) Serial.print("PRESS\t ");
       else Serial.print("RELEASE\t ");
       //  map keyCode to GPIO nr.
       keyCode &= 0x7F;
-      keyCode -= 97;
-      Serial.print(keyCode);
-      Serial.println();
+
+      if (keyCode > 96)  //  GPIO
+      {
+        //  process  gpio
+        keyCode -= 97;
+        Serial.print(keyCode);
+        Serial.println();
+      }
+      else
+      {
+        //  process  matrix
+        keyCode--;
+        Serial.print(keyCode / 10);
+        Serial.print("\t ");
+        Serial.print(keyCode % 10);
+        Serial.println();
+      }
 
       //  clear the EVENT IRQ flag
-      tio.writeRegister(TCA8418_REG_INT_STAT, 1);
+      keypad.writeRegister(TCA8418_REG_INT_STAT, 1);
     }
 
     //  check pending events
-    int intstat = tio.readRegister(TCA8418_REG_INT_STAT);
+    int intstat = keypad.readRegister(TCA8418_REG_INT_STAT);
     if ((intstat & 0x03) == 0) TCA8418_event = false;
 
   }
