@@ -26,24 +26,24 @@
 #define TCA8418_DEFAULT_ADDR 0x34 ///< The default I2C address for our breakout
 
 enum {
-  TCA8418_ROW0,
-  TCA8418_ROW1,
-  TCA8418_ROW2,
-  TCA8418_ROW3,
-  TCA8418_ROW4,
-  TCA8418_ROW5,
-  TCA8418_ROW6,
-  TCA8418_ROW7,
-  TCA8418_COL0,
-  TCA8418_COL1,
-  TCA8418_COL2,
-  TCA8418_COL3,
-  TCA8418_COL4,
-  TCA8418_COL5,
-  TCA8418_COL6,
-  TCA8418_COL7,
-  TCA8418_COL8,
-  TCA8418_COL9
+  TCA8418_ROW0, ///< Row 0
+  TCA8418_ROW1, ///< Row 1
+  TCA8418_ROW2, ///< Row 2
+  TCA8418_ROW3, ///< Row 3
+  TCA8418_ROW4, ///< Row 4
+  TCA8418_ROW5, ///< Row 5
+  TCA8418_ROW6, ///< Row 6
+  TCA8418_ROW7, ///< Row 7
+  TCA8418_COL0, ///< Column 0
+  TCA8418_COL1, ///< Column 1
+  TCA8418_COL2, ///< Column 2
+  TCA8418_COL3, ///< Column 3
+  TCA8418_COL4, ///< Column 4
+  TCA8418_COL5, ///< Column 5
+  TCA8418_COL6, ///< Column 6
+  TCA8418_COL7, ///< Column 7
+  TCA8418_COL8, ///< Column 8
+  TCA8418_COL9  ///< Column 9
 };
 
 /*!
