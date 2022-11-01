@@ -21,8 +21,8 @@
 // #define TCA8418_REG_RESERVED          0x00
 #define TCA8418_REG_CFG 0x01             ///< See datasheet
 #define TCA8418_REG_INT_STAT 0x02        ///< See datasheet
-#define TCA8418_REG_KEY_LCK_EC 0x03      /// Key lock and event counter
-#define TCA8418_REG_KEY_EVENT_A 0x04     /// Key event register A
+#define TCA8418_REG_KEY_LCK_EC 0x03      ///< Key lock and event counter
+#define TCA8418_REG_KEY_EVENT_A 0x04     ///< Key event register A
 #define TCA8418_REG_KEY_EVENT_B 0x05     ///< See datasheet
 #define TCA8418_REG_KEY_EVENT_C 0x06     ///< See datasheet
 #define TCA8418_REG_KEY_EVENT_D 0x07     ///< See datasheet
