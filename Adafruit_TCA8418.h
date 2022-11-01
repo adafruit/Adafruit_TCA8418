@@ -25,6 +25,7 @@
 
 #define TCA8418_DEFAULT_ADDR 0x34 ///< The default I2C address for our breakout
 
+/** Row and Column */
 enum {
   TCA8418_ROW0, ///< Row 0
   TCA8418_ROW1, ///< Row 1
