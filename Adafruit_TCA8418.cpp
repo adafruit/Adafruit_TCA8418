@@ -48,7 +48,7 @@ Adafruit_TCA8418::~Adafruit_TCA8418(void) {}
 
 /**
  *    @brief  Sets up the hardware and initializes I2C
- *    @param  addr The I2C address for the expander
+ *    @param  address The I2C address for the expander
  *    @param  wire
  *            The Wire object to be used for I2C connections.
  *    @return True if initialization was successful, otherwise false.
@@ -214,7 +214,7 @@ uint8_t Adafruit_TCA8418::digitalRead(uint8_t pinnum) {
  * @brief set GPIO pin to LOW or HIGH
  *
  * @param [in] pinnum Pin name between TCA8418_ROW0 and TCA8418_COL9  0..17
- * @param [in] value  0 = LOW, all other are HIGH
+ * @param [in] level  0 = LOW, all other are HIGH
  * @return true if successful
  */
 bool Adafruit_TCA8418::digitalWrite(uint8_t pinnum, uint8_t level) {
@@ -274,7 +274,7 @@ bool Adafruit_TCA8418::pinMode(uint8_t pinnum, uint8_t mode) {
  * @brief set IRQ mode of GPIO pin to FALLING RISING
  *
  * @param [in] pinnum Pin name between TCA8418_ROW0 and TCA8418_COL9  0..17
- * @param [in] IRQ mode   FALLING RISING
+ * @param [in] mode   IRQ mode: FALLING RISING
  * @return  false if failed.
  */
 bool Adafruit_TCA8418::pinIRQMode(uint8_t pinnum, uint8_t mode) {
