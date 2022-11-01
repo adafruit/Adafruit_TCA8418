@@ -7,11 +7,11 @@ jobs:
     runs-on: ubuntu-latest
     
     steps:
-    - uses: actions/setup-python@v1
+    - uses: actions/setup-python@v4
       with:
         python-version: '3.x'
-    - uses: actions/checkout@v2
-    - uses: actions/checkout@v2
+    - uses: actions/checkout@v3
+    - uses: actions/checkout@v3
       with:
          repository: adafruit/ci-arduino
          path: ci
@@ -21,6 +21,9 @@ jobs:
 
     - name: Check for correct code formatting with clang-format
       run: python3 ci/run-clang-format.py -e "ci/*" -e "bin/*" -r . 
+
+    - name: Install libs for examples
+      run: arduino-cli lib install "Adafruit SH110X"
 
     - name: Test the code on supported platforms
       run: python3 ci/build_platform.py main_platforms zero feather32u4
