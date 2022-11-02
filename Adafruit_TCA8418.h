@@ -26,24 +26,24 @@
 #define TCA8418_DEFAULT_ADDR 0x34 ///< The default I2C address for our breakout
 
 enum {
-  TCA8418_ROW0,
-  TCA8418_ROW1,
-  TCA8418_ROW2,
-  TCA8418_ROW3,
-  TCA8418_ROW4,
-  TCA8418_ROW5,
-  TCA8418_ROW6,
-  TCA8418_ROW7,
-  TCA8418_COL0,
-  TCA8418_COL1,
-  TCA8418_COL2,
-  TCA8418_COL3,
-  TCA8418_COL4,
-  TCA8418_COL5,
-  TCA8418_COL6,
-  TCA8418_COL7,
-  TCA8418_COL8,
-  TCA8418_COL9
+  TCA8418_ROW0, ///< Pin ID for row 0
+  TCA8418_ROW1, ///< Pin ID for row 1
+  TCA8418_ROW2, ///< Pin ID for row 2
+  TCA8418_ROW3, ///< Pin ID for row 3
+  TCA8418_ROW4, ///< Pin ID for row 4
+  TCA8418_ROW5, ///< Pin ID for row 5
+  TCA8418_ROW6, ///< Pin ID for row 6
+  TCA8418_ROW7, ///< Pin ID for row 7
+  TCA8418_COL0, ///< Pin ID for column 0
+  TCA8418_COL1, ///< Pin ID for column 1
+  TCA8418_COL2, ///< Pin ID for column 2
+  TCA8418_COL3, ///< Pin ID for column 3
+  TCA8418_COL4, ///< Pin ID for column 4
+  TCA8418_COL5, ///< Pin ID for column 5
+  TCA8418_COL6, ///< Pin ID for column 6
+  TCA8418_COL7, ///< Pin ID for column 7
+  TCA8418_COL8, ///< Pin ID for column 8
+  TCA8418_COL9  ///< Pin ID for column 9
 };
 
 /*!
